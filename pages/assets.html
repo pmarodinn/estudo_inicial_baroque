@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Baroque - Cotações</title>
     <link rel="stylesheet" href="../css/style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="../js/config.js"></script>
 </head>
 <body>
@@ -22,11 +24,11 @@
         <main>
             <div class="assets-header">
                 <h2 class="section-title">Análise de Ativos</h2>
-                <p>Clique em um ativo para visualizar série histórica.</p>
+                <p>Selecione um ativo para visualizar a série histórica</p>
             </div>
 
-            <div id="assets-grid" class="grid">
-                <!-- Assets cards will be injected here by JS -->
+            <div id="assets-container">
+                <!-- Content injected by JS -->
             </div>
         </main>
 
@@ -36,24 +38,155 @@
     </div>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            const grid = document.getElementById('assets-grid');
+            const container = document.getElementById('assets-container');
+            
+            // Group by Region then Category
+            const grouped = {};
             
             ASSETS_CONFIG.forEach(asset => {
-                const card = document.createElement('a');
-                card.href = `${asset.id}.html`;
-                card.className = 'card asset-link';
-                
-                const title = document.createElement('h3');
-                title.textContent = asset.name;
-                
-                const icon = document.createElement('div');
-                icon.className = 'asset-icon';
-                icon.innerHTML = '&#8599;'; // North East Arrow
-                
-                card.appendChild(title);
-                card.appendChild(icon);
-                grid.appendChild(card);
+                const region = asset.region || 'Outros';
+                const category = asset.category || 'Geral';
+
+                if (!grouped[region]) {
+                    grouped[region] = {};
+                }
+                if (!grouped[region][category]) {
+                    grouped[region][category] = [];
+                }
+                grouped[region][category].push(asset);
             });
+
+            // Order regions: Brasil, EUA, Ativos Não Tradicionais
+            const regionOrder = ['Brasil', 'EUA', 'Ativos Não Tradicionais'];
+            // Add any other regions that might exist but are not in the list
+            Object.keys(grouped).forEach(r => {
+                if (!regionOrder.includes(r)) regionOrder.push(r);
+            });
+            
+            regionOrder.forEach(region => {
+                if (grouped[region]) {
+                    const regionSection = document.createElement('section');
+                    regionSection.className = 'region-section';
+                    
+                    const regionTitle = document.createElement('h2');
+                    regionTitle.className = 'region-title';
+                    regionTitle.textContent = region;
+                    regionSection.appendChild(regionTitle);
+                    
+                    const categories = grouped[region];
+                    Object.keys(categories).forEach(category => {
+                        const categoryDiv = document.createElement('div');
+                        categoryDiv.className = 'category-group';
+                        
+                        const catTitle = document.createElement('h3');
+                        catTitle.className = 'category-title';
+                        catTitle.textContent = category;
+                        categoryDiv.appendChild(catTitle);
+                        
+                        const grid = document.createElement('div');
+                        grid.className = 'grid';
+                        
+                        categories[category].forEach(asset => {
+                            const card = document.createElement('a');
+                            card.href = `${asset.id}.html`;
+                            card.className = 'card asset-link';
+                            // Make card a flex container column
+                            card.style.display = 'flex';
+                            card.style.flexDirection = 'column';
+                            card.style.justifyContent = 'space-between';
+                            
+                            const title = document.createElement('h3');
+                            title.textContent = asset.name;
+                            
+                            // Mini chart container
+                            const chartContainer = document.createElement('div');
+                            chartContainer.style.height = '100px'; 
+                            chartContainer.style.width = '100%';
+                            chartContainer.style.marginTop = '1rem';
+                            chartContainer.style.position = 'relative';
+                            
+                            const canvas = document.createElement('canvas');
+                            canvas.id = `mini-chart-${asset.id}`;
+                            chartContainer.appendChild(canvas);
+                            
+                            card.appendChild(title);
+                            card.appendChild(chartContainer);
+                            grid.appendChild(card);
+                            
+                            // Render mini chart
+                            renderMiniChart(asset.path, canvas.id);
+                        });
+                        
+                        categoryDiv.appendChild(grid);
+                        regionSection.appendChild(categoryDiv);
+                    });
+                    
+                    container.appendChild(regionSection);
+                }
+            });
+
+            function renderMiniChart(csvPath, canvasId) {
+                Papa.parse(csvPath, {
+                    download: true,
+                    header: true,
+                    skipEmptyLines: true,
+                    complete: function(results) {
+                        const data = results.data;
+                        if (!data || data.length === 0) return;
+
+                        const keys = Object.keys(data[0]);
+                        // Assume Date is first col, Value is second
+                        const values = [];
+                        
+                        // Parse values
+                        for(let i=0; i<data.length; i++) {
+                            const val = parseFloat(data[i][keys[1]]);
+                            if(!isNaN(val)) values.push(val);
+                        }
+                        
+                        // Decimate for performance (target ~50 points)
+                        const decimationFactor = Math.max(1, Math.ceil(values.length / 50));
+                        const reducedValues = values.filter((_, i) => i % decimationFactor === 0);
+                        // Labels not strictly needed for sparkline but Chart.js requires labels array of same length
+                        const reducedLabels = new Array(reducedValues.length).fill(''); 
+
+                        const ctx = document.getElementById(canvasId).getContext('2d');
+                        
+                        new Chart(ctx, {
+                            type: 'line',
+                            data: {
+                                labels: reducedLabels,
+                                datasets: [{
+                                    data: reducedValues,
+                                    borderColor: '#800020',
+                                    borderWidth: 2,
+                                    pointRadius: 0,
+                                    fill: false,
+                                    tension: 0.3
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                plugins: { legend: { display: false }, tooltip: { enabled: false } },
+                                scales: {
+                                    x: { display: false },
+                                    y: { display: false }
+                                },
+                                animation: false,
+                                elements: {
+                                    line: {
+                                        borderJoinStyle: 'round'
+                                    }
+                                }
+                            }
+                        });
+                    },
+                    error: function(err) {
+                        console.error('Error parsing csv for mini chart', err);
+                    }
+                });
+            }
         });
     </script>
 </body>
