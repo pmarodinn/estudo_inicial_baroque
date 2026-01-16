@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Baroque - US Corp Bond Inv Grade (LQD)</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-zoom/2.0.1/chartjs-plugin-zoom.min.js"></script>
+    <style>
+        .chart-full-container {
+            height: 70vh;
+            width: 100%;
+            margin-top: 2rem;
+            position: relative;
+        }
+        #chart {
+            width: 100%;
+            height: 100%;
+        }
+        .header-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        .back-link {
+            font-size: 0.9rem;
+            color: var(--secondary-color);
+        }
+        .back-link:hover {
+            color: var(--primary-color);
+        }
+        .loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: var(--primary-color);
+        }
+        .asset-title {
+            font-size: 2rem;
+            font-family: var(--font-title);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1 class="brand-title"><a href="../index.html">BAROQUE</a></h1>
+            <nav>
+                <ul>
+                    <li><a href="../index.html">Home</a></li>
+                    <li><a href="assets.html" class="active">Cotações</a></li>
+                </ul>
+            </nav>
+        </header>
+
+        <main>
+            <div class="header-controls">
+                <a href="assets.html" class="back-link">&larr; Voltar para Lista</a>
+                <h2 id="asset-name" class="asset-title">US Corp Bond Inv Grade (LQD)</h2>
+            </div>
+            
+            <div class="chart-full-container">
+                <div id="chart"></div>
+                <div id="loading-msg" class="loading">Carregando dados...</div>
+            </div>
+        </main>
+
+        <footer>
+            <p>&copy; 2026 Baroque Inc. Todos os direitos reservados.</p>
+        </footer>
+    </div>
+    <script>
+        // Inject configuration specific to this asset
+        const CURRENT_ASSET_CONFIG = {
+            name: "US Corp Bond Inv Grade (LQD)",
+            path: "../dados/renda_fixa/US/us_corp_bond_inv_grade_LQD.csv"
+        };
+    </script>
+    <script src="../js/render_chart.js"></script>
+</body>
+</html>

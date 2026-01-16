@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Baroque - Cotações</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <script src="../js/config.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1 class="brand-title"><a href="../index.html">BAROQUE</a></h1>
+            <nav>
+                <ul>
+                    <li><a href="../index.html">Home</a></li>
+                    <li><a href="#" class="active">Cotações</a></li>
+                </ul>
+            </nav>
+        </header>
+
+        <main>
+            <div class="assets-header">
+                <h2 class="section-title">Análise de Ativos</h2>
+                <p>Clique em um ativo para visualizar série histórica.</p>
+            </div>
+
+            <div id="assets-grid" class="grid">
+                <!-- Assets cards will be injected here by JS -->
+            </div>
+        </main>
+
+        <footer>
+            <p>&copy; 2026 Baroque Inc. Todos os direitos reservados.</p>
+        </footer>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const grid = document.getElementById('assets-grid');
+            
+            ASSETS_CONFIG.forEach(asset => {
+                const card = document.createElement('a');
+                card.href = `${asset.id}.html`;
+                card.className = 'card asset-link';
+                
+                const title = document.createElement('h3');
+                title.textContent = asset.name;
+                
+                const icon = document.createElement('div');
+                icon.className = 'asset-icon';
+                icon.innerHTML = '&#8599;'; // North East Arrow
+                
+                card.appendChild(title);
+                card.appendChild(icon);
+                grid.appendChild(card);
+            });
+        });
+    </script>
+</body>
+</html>
